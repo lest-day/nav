@@ -23,6 +23,12 @@
     "translation": "https://fanyi.baidu.com/#zh/en/",
     "icon": "baidu"
   },
+  "sogou": {
+    "name": "搜狗",
+    "url": "https://www.sogou.com/sogou?query=",
+    "translation": "https://fanyi.sogou.com/text?keyword=",
+    "icon": "sogou"
+  },
   "duckduckgo": {
     "name": "DuckDuckGo",
     "url": "https://duckduckgo.com/?q=",
