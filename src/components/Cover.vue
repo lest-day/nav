@@ -42,7 +42,7 @@ const setBgUrl = () => {
       bgUrl.value = "https://api.aixiaowai.cn/gqapi/gqapi.php";
       break;
     case 3:
-      bgUrl.value = "https://www.loliapi.com/acg/";
+      bgUrl.value = "https://t.alcy.cc/ycy";
       break;
     case 4:
       bgUrl.value = set.backgroundCustom;
