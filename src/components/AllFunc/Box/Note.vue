@@ -231,7 +231,6 @@ const deleteNote = (id) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: #f8f8f8;
 }
 
 .note-container {
@@ -249,14 +248,9 @@ const deleteNote = (id) => {
   flex-direction: column;
   height: 220px;
   padding: 16px;
-  background-color: #fff;
   border-radius: 4px;
-  border: 1px solid #eaeaea;
+  border: 1px solid #e0e0e0;
   transition: all 0.2s;
-}
-
-.note-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .note-header {
@@ -264,7 +258,7 @@ const deleteNote = (id) => {
   justify-content: space-between;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .title {
@@ -278,7 +272,7 @@ const deleteNote = (id) => {
 
 .date {
   font-size: 12px;
-  color: #999;
+  color: #757575;
   margin-left: 8px;
   white-space: nowrap;
 }
@@ -292,7 +286,6 @@ const deleteNote = (id) => {
   -webkit-box-orient: vertical;
   font-size: 14px;
   line-height: 1.6;
-  color: #333;
 }
 
 .note-actions {
@@ -301,7 +294,7 @@ const deleteNote = (id) => {
   gap: 4px;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #e0e0e0;
 }
 
 .add-note {
@@ -310,13 +303,7 @@ const deleteNote = (id) => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background-color: #fafafa;
-  border: 1px dashed #ddd;
-  color: #666;
-}
-
-.add-note:hover {
-  background-color: #f5f5f5;
+  border: 1px dashed #bdbdbd;
 }
 
 .not-note {
@@ -330,6 +317,5 @@ const deleteNote = (id) => {
 
 .tip {
   font-size: 16px;
-  color: #666;
 }
 </style>
