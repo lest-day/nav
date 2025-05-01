@@ -118,7 +118,7 @@
               :tooltip="false"
             />
           </n-card>
-          <n-h6 prefix="bar"> 时间显示 </n-h6>
+          <n-h6 prefix="bar"> 时间 </n-h6>
           <n-card class="set-item">
             <div class="name">
               <span class="title">时钟样式</span>
