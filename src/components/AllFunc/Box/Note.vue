@@ -1,5 +1,14 @@
 <template>
   <div class="note__layout">
+    <div class="add-btn-container">
+      <n-button type="primary" @click="openAddModal" class="add-btn">
+        <template #icon>
+          <SvgIcon iconName="icon-add" />
+        </template>
+        添加便签
+      </n-button>
+    </div>
+
     <Transition name="fade" mode="out-in">
       <div v-if="notes.length" class="note-container">
         <n-scrollbar class="scrollbar">
@@ -19,7 +28,7 @@
                 <span class="title">{{ note.title }}</span>
                 <span class="date">{{ formatDate(note.updateTime) }}</span>
               </div>
-              <div class="content">{{ note.content }}</div>
+              <div class="content" :title="note.content">{{ note.content }}</div>
               <div class="note-actions">
                 <n-button text @click.stop="editNote(note)">
                   <SvgIcon iconName="icon-edit" size="16" />
@@ -29,24 +38,11 @@
                 </n-button>
               </div>
             </n-grid-item>
-            <n-grid-item
-              class="note-item add-note"
-              @click="openAddModal"
-            >
-              <SvgIcon iconName="icon-add" size="20" />
-              <span>添加便签</span>
-            </n-grid-item>
           </n-grid>
         </n-scrollbar>
       </div>
       <div v-else class="not-note">
-        <span class="tip">暂无便签</span>
-        <n-button strong secondary @click="openAddModal">
-          <template #icon>
-            <SvgIcon iconName="icon-add" />
-          </template>
-          添加便签
-        </n-button>
+        <span class="tip">暂无便签，点击上方按钮添加</span>
       </div>
     </Transition>
 
@@ -117,7 +113,7 @@ const notes = ref(JSON.parse(localStorage.getItem('notes')) || [
   { 
     id: 1, 
     title: '欢迎使用便签', 
-    content: '这是一个简单的便签示例，您可以编辑或删除它', 
+    content: '这是一个简单的便签示例，您可以编辑或删除它。长内容会自动显示省略号，鼠标悬停可查看完整内容。', 
     updateTime: Date.now()
   }
 ])
@@ -233,9 +229,19 @@ const deleteNote = (id) => {
   flex-direction: column;
 }
 
+.add-btn-container {
+  padding: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.add-btn {
+  margin-bottom: 16px;
+}
+
 .note-container {
   height: 100%;
-  padding: 16px;
+  padding: 0 16px 16px;
   box-sizing: border-box;
 }
 
@@ -286,6 +292,7 @@ const deleteNote = (id) => {
   -webkit-box-orient: vertical;
   font-size: 14px;
   line-height: 1.6;
+  word-break: break-word;
 }
 
 .note-actions {
@@ -295,15 +302,6 @@ const deleteNote = (id) => {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid #e0e0e0;
-}
-
-.add-note {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border: 1px dashed #bdbdbd;
 }
 
 .not-note {
