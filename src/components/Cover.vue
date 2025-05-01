@@ -26,16 +26,12 @@ const bgUrl = ref(null);
 const imgTimeout = ref(null);
 const emit = defineEmits(["loadComplete"]);
 
-// 壁纸随机数
-// 请依据文件夹内的图片个数修改 Math.random() 后面的第一个数字
-const bgRandom = Math.floor(Math.random() * 3 + 1);
-
 // 赋值壁纸
 const setBgUrl = () => {
   const { backgroundType } = set;
   switch (backgroundType) {
     case 0:
-      bgUrl.value = `/background/bg${bgRandom}.jpg`;
+      bgUrl.value = `/background/bg1.jpg`;
       break;
     case 1: {
       const isMobile = window.innerWidth < 768;
