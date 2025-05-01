@@ -14,7 +14,6 @@
               v-for="note in sortedNotes"
               :key="note.id"
               class="note-item"
-              :style="{ backgroundColor: note.color || '#ffffff' }"
             >
               <div class="note-header">
                 <span class="title">{{ note.title }}</span>
@@ -34,7 +33,7 @@
                 </n-tooltip>
                 <n-tooltip trigger="hover">
                   <template #trigger>
-                    <n-button text @click.stop="deleteNote(note.id)">
+                    <n-button text @click.stop="confirmDeleteNote(note)">
                       <template #icon>
                         <SvgIcon iconName="icon-delete" />
                       </template>
@@ -42,15 +41,6 @@
                   </template>
                   删除
                 </n-tooltip>
-                <n-color-picker
-                  :value="note.color || '#ffffff'"
-                  :swatches="colorSwatches"
-                  @update:value="(val) => changeNoteColor(note.id, val)"
-                  size="small"
-                  :show-alpha="false"
-                  :modes="['hex']"
-                  class="color-picker"
-                />
               </div>
             </n-grid-item>
             <n-grid-item
@@ -105,14 +95,6 @@
             show-count
           />
         </n-form-item>
-        <n-form-item label="颜色">
-          <n-color-picker
-            v-model:value="currentNote.color"
-            :swatches="colorSwatches"
-            :show-alpha="false"
-            :modes="['hex']"
-          />
-        </n-form-item>
       </n-form>
       <template #action>
         <n-space>
@@ -136,13 +118,14 @@ import {
   NFormItem, 
   NInput,
   NTooltip,
-  NColorPicker,
   NSpace,
-  useMessage
+  useMessage,
+  useDialog
 } from 'naive-ui'
 import SvgIcon from '@/components/SvgIcon.vue'
 
 const message = useMessage()
+const dialog = useDialog()
 
 // 便签数据
 const notes = ref(JSON.parse(localStorage.getItem('notes')) || [
@@ -150,30 +133,16 @@ const notes = ref(JSON.parse(localStorage.getItem('notes')) || [
     id: 1, 
     title: '欢迎使用便签', 
     content: '这是一个简单的便签示例，您可以编辑或删除它', 
-    updateTime: Date.now(),
-    color: '#fff9c4'
+    updateTime: Date.now()
   }
 ])
-
-// 颜色选择器预设
-const colorSwatches = [
-  '#FFFFFF',
-  '#FFF9C4',
-  '#C8E6C9',
-  '#BBDEFB',
-  '#E1BEE7',
-  '#FFCCBC',
-  '#F8BBD0',
-  '#D7CCC8'
-]
 
 // 当前操作的便签
 const currentNote = ref({
   id: null,
   title: '',
   content: '',
-  updateTime: null,
-  color: '#ffffff'
+  updateTime: null
 })
 
 // 控制模态框显示
@@ -198,8 +167,7 @@ const openAddModal = () => {
     id: null,
     title: '',
     content: '',
-    updateTime: null,
-    color: '#ffffff'
+    updateTime: null
   }
   showModal.value = true
 }
@@ -249,6 +217,19 @@ const saveNote = () => {
   showModal.value = false
 }
 
+// 确认删除便签
+const confirmDeleteNote = (note) => {
+  dialog.warning({
+    title: '删除确认',
+    content: `确定要删除便签"${note.title}"吗？`,
+    positiveText: '删除',
+    negativeText: '取消',
+    onPositiveClick: () => {
+      deleteNote(note.id)
+    }
+  })
+}
+
 // 删除便签
 const deleteNote = (id) => {
   const index = notes.value.findIndex(n => n.id === id)
@@ -256,16 +237,6 @@ const deleteNote = (id) => {
     notes.value.splice(index, 1)
     saveToLocalStorage()
     message.success('便签已删除')
-  }
-}
-
-// 更改便签颜色
-const changeNoteColor = (id, color) => {
-  const note = notes.value.find(n => n.id === id)
-  if (note) {
-    note.color = color
-    note.updateTime = Date.now()
-    saveToLocalStorage()
   }
 }
 </script>
@@ -292,8 +263,9 @@ const changeNoteColor = (id, color) => {
   flex-direction: column;
   height: 220px;
   padding: 16px;
+  background-color: #ffffff;
   border-radius: 8px;
-  border: 1px solid var(--note-border-color);
+  border: 1px solid #e0e0e0;
   transition: all 0.2s;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
@@ -322,7 +294,7 @@ const changeNoteColor = (id, color) => {
 
 .date {
   font-size: 12px;
-  color: var(--note-date-color);
+  color: #888888;
   margin-left: 8px;
   white-space: nowrap;
 }
@@ -336,21 +308,16 @@ const changeNoteColor = (id, color) => {
   -webkit-box-orient: vertical;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--note-content-color);
+  color: #333333;
 }
 
 .note-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 8px;
   margin-top: 12px;
   padding-top: 8px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.color-picker {
-  width: 28px;
-  height: 28px;
 }
 
 .add-note {
@@ -359,12 +326,12 @@ const changeNoteColor = (id, color) => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background-color: var(--note-add-bg-color);
-  border: 1px dashed var(--note-border-color);
+  background-color: #f5f5f5;
+  border: 1px dashed #e0e0e0;
 }
 
 .add-note:hover {
-  background-color: var(--note-add-hover-color);
+  background-color: #eeeeee;
 }
 
 .not-note {
@@ -378,21 +345,6 @@ const changeNoteColor = (id, color) => {
 
 .tip {
   font-size: 16px;
-  color: var(--note-tip-color);
-}
-</style>
-
-<style>
-/* 全局覆盖颜色选择器样式 */
-.n-color-picker-trigger {
-  width: 28px !important;
-  height: 28px !important;
-  padding: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.n-color-picker-trigger__fill {
-  border-radius: 4px !important;
+  color: #666666;
 }
 </style>
