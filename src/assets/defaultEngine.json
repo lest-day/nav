@@ -17,6 +17,11 @@
     "translation": "https://translate.yandex.com/?text=",
     "icon": "yandex"
   },
+  "duckduckgo": {
+    "name": "DuckDuckGo",
+    "url": "https://duckduckgo.com/?q=",
+    "icon": "duckduckgo"
+  },
   "baidu": {
     "name": "百度",
     "url": "https://www.baidu.com/s?wd=",
@@ -28,11 +33,6 @@
     "url": "https://www.sogou.com/sogou?query=",
     "translation": "https://fanyi.sogou.com/text?keyword=",
     "icon": "sogou"
-  },
-  "duckduckgo": {
-    "name": "DuckDuckGo",
-    "url": "https://duckduckgo.com/?q=",
-    "icon": "duckduckgo"
   },
   "bilibili": {
     "name": "BiliBili",
