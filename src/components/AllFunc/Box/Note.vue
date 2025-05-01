@@ -35,7 +35,7 @@
             </n-grid-item>
             <n-grid-item
               class="note-item add-note"
-              @click="showAddModal = true"
+              @click="openAddModal"
             >
               <SvgIcon iconName="icon-add" />
               <span class="add-text">添加便签</span>
@@ -45,7 +45,7 @@
       </div>
       <div v-else class="not-note">
         <span class="tip">暂无便签，去添加吧</span>
-        <n-button strong secondary @click="showAddModal = true">
+        <n-button strong secondary @click="openAddModal">
           <template #icon>
             <SvgIcon iconName="icon-add" />
           </template>
@@ -111,14 +111,13 @@ const formatDate = (timestamp) => {
   return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
 }
 
-// 添加新便签
-const addNote = () => {
-  const newId = notes.value.length ? Math.max(...notes.value.map(n => n.id)) + 1 : 1
+// 打开添加模态框
+const openAddModal = () => {
   currentNote.value = {
-    id: newId,
+    id: null,
     title: '',
     content: '',
-    updateTime: Date.now()
+    updateTime: null
   }
   showModal.value = true
 }
@@ -140,11 +139,21 @@ const saveNote = () => {
     // 更新现有便签
     const index = notes.value.findIndex(n => n.id === currentNote.value.id)
     if (index !== -1) {
-      notes.value[index] = { ...currentNote.value, updateTime: Date.now() }
+      notes.value[index] = { 
+        ...currentNote.value, 
+        updateTime: Date.now() 
+      }
     }
   } else {
-    // 添加新便签
-    notes.value.push({ ...currentNote.value, updateTime: Date.now() })
+    // 添加新便签 - 修复了这里的问题
+    const newId = notes.value.length > 0 
+      ? Math.max(...notes.value.map(n => n.id)) + 1 
+      : 1
+    notes.value.push({ 
+      ...currentNote.value, 
+      id: newId,
+      updateTime: Date.now() 
+    })
   }
   
   showModal.value = false
