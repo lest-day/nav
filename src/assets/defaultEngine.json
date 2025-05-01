@@ -11,6 +11,16 @@
     "translation": "https://translate.google.com/?text=",
     "icon": "google"
   },
+  "bilibili": {
+    "name": "BiliBili",
+    "url": "https://search.bilibili.com/all?keyword=",
+    "icon": "bilibili"
+  },
+  "github": {
+    "name": "Github",
+    "url": "https://github.com/search?q=",
+    "icon": "github"
+  },
   "yandex": {
     "name": "Yandex",
     "url": "https://yandex.com/search/?text=",
@@ -33,16 +43,6 @@
     "url": "https://www.sogou.com/sogou?query=",
     "translation": "https://fanyi.sogou.com/text?keyword=",
     "icon": "sogou"
-  },
-  "bilibili": {
-    "name": "BiliBili",
-    "url": "https://search.bilibili.com/all?keyword=",
-    "icon": "bilibili"
-  },
-  "github": {
-    "name": "Github",
-    "url": "https://github.com/search?q=",
-    "icon": "github"
   },
   "weibo": {
     "name": "微博",
