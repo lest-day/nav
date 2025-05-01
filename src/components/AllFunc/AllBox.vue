@@ -4,6 +4,7 @@
       <ShortCut />
     </n-tab-pane>
     <n-tab-pane name="note" tab="便签">
+      <Note />
     </n-tab-pane>
     <n-tab-pane name="more" tab="待办"> 还能有啥呢 😢 </n-tab-pane>
   </n-tabs>
