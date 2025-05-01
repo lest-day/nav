@@ -1,8 +1,8 @@
 <template>
   <!-- 便签主布局 -->
-  <div class="notes__layout">
+  <div class="note__layout">
     <Transition name="fade" mode="out-in">
-      <div v-if="notesData[0]" class="notes-container">
+      <div v-if="noteData[0]" class="note-container">
         <n-scrollbar class="scrollbar">
           <n-grid
             class="all-notes"
@@ -12,27 +12,26 @@
             :y-gap="12"
           >
             <n-grid-item
-              v-for="note in filteredNotes"
-              :key="note.id"
+              v-for="item in noteData"
+              :key="item.id"
               class="note-item"
-              :style="{ backgroundColor: note.color || '' }"
-              @contextmenu="noteContextmenu($event, note)"
+              @contextmenu="noteContextmenu($event, item)"
             >
               <div class="note-header">
-                <span class="title">{{ note.title }}</span>
-                <span class="date">{{ formatDate(note.updatedAt) }}</span>
+                <span class="title">{{ item.title }}</span>
+                <span class="date">{{ formatDate(item.updateTime) }}</span>
               </div>
-              <div class="content">{{ note.content }}</div>
-              <div v-if="note.tags?.length" class="tags">
-                <n-tag
-                  v-for="tag in note.tags"
-                  :key="tag"
-                  size="small"
-                  type="info"
-                  style="margin-right: 4px"
+              <div class="content" v-html="item.content"></div>
+              <div class="note-footer">
+                <n-button
+                  text
+                  class="edit-btn"
+                  @click.stop="editNote(item)"
                 >
-                  {{ tag }}
-                </n-tag>
+                  <template #icon>
+                    <SvgIcon iconName="icon-edit" />
+                  </template>
+                </n-button>
               </div>
             </n-grid-item>
             <n-grid-item
@@ -40,12 +39,12 @@
               @click="addNoteModalOpen"
             >
               <SvgIcon iconName="icon-add" />
-              <span class="name">添加便签</span>
+              <span class="add-text">添加便签</span>
             </n-grid-item>
           </n-grid>
         </n-scrollbar>
       </div>
-      <div v-else class="no-notes">
+      <div v-else class="not-note">
         <span class="tip">暂无便签，去添加吧</span>
         <n-button strong secondary @click="addNoteModalOpen">
           <template #icon>
@@ -55,49 +54,15 @@
         </n-button>
       </div>
     </Transition>
-
-    <!-- 操作栏 -->
-    <div class="action-bar">
-      <n-input
-        v-model:value="searchQuery"
-        placeholder="搜索便签..."
-        clearable
-        style="max-width: 300px; margin-right: 15px"
-      >
-        <template #prefix>
-          <SvgIcon iconName="icon-search" />
-        </template>
-      </n-input>
-      
-      <n-select
-        v-model:value="selectedTag"
-        :options="tagOptions"
-        placeholder="按标签筛选"
-        clearable
-        style="width: 150px; margin-right: 15px"
-      />
-      
-      <div class="footer__btn-group">
-        <n-tooltip trigger="hover">
-          <template #trigger>
-            <div class="footer__btn" @click="exportNotes">
-              <SvgIcon iconName="icon-xiazai" />
-              <span class="btnName">导出</span>
-            </div>
-          </template>
-          导出为JSON文件
-        </n-tooltip>
-        
-        <n-tooltip trigger="hover">
-          <template #trigger>
-            <div class="footer__btn" @click="clickFileDom">
-              <input type="file" name="上传" id="notesUploadInput" accept=".json" />
-              <SvgIcon iconName="icon-shangchuan" />
-              <span class="btnName">导入</span>
-            </div>
-          </template>
-          从JSON文件导入
-        </n-tooltip>
+    <div class="footer__btn-group">
+      <div class="footer__btn" @click="exportNotes">
+        <SvgIcon iconName="icon-xiazai" />
+        <span class="btnName">导出</span>
+      </div>
+      <div class="footer__btn" @click="clickFileDom">
+        <input type="file" name="上传" id="noteUploadInput" accept=".json" />
+        <SvgIcon iconName="icon-shangchuan" />
+        <span class="btnName">导入</span>
       </div>
     </div>
   </div>
@@ -108,7 +73,7 @@
     v-model:show="noteModalShow"
     :title="`${noteModalType ? '编辑' : '添加'}便签`"
     :bordered="false"
-    style="max-width: 600px"
+    style="width: 90%; max-width: 800px;"
     @mask-click="noteModalClose"
   >
     <n-form
@@ -130,37 +95,22 @@
         <n-input
           clearable
           show-count
-          maxlength="20"
+          maxlength="30"
           v-model:value="noteFormValue.title"
           placeholder="请输入便签标题"
         />
       </n-form-item>
       <n-form-item label="内容" path="content">
-        <n-input
-          type="textarea"
-          :autosize="{ minRows: 3, maxRows: 8 }"
-          clearable
-          show-count
-          maxlength="500"
+        <RichTextEditor
           v-model:value="noteFormValue.content"
-          placeholder="请输入便签内容"
-        />
-      </n-form-item>
-      <n-form-item label="标签" path="tags">
-        <n-dynamic-tags v-model:value="noteFormValue.tags" />
-      </n-form-item>
-      <n-form-item label="颜色" path="color">
-        <n-color-picker
-          v-model:value="noteFormValue.color"
-          :swatches="['#FFFFFF', '#FFF1F0', '#FFF2E8', '#FEF7E8', '#FBFFE8', '#F8FFE8', '#F0FFE8', '#E8FFEE', '#E8FFF7', '#E8FFFF', '#E8F7FF', '#E8EEFF', '#F0E8FF', '#F7E8FF', '#FFE8F7', '#FFE8EE']"
-          :show-alpha="false"
+          placeholder="请输入便签内容..."
         />
       </n-form-item>
     </n-form>
     <template #footer>
       <n-space justify="end">
         <n-button strong secondary @click="noteModalClose"> 取消 </n-button>
-        <n-button strong secondary type="primary" @click="saveNote">
+        <n-button strong secondary @click="saveNote">
           {{ noteModalType ? "保存" : "添加" }}
         </n-button>
       </n-space>
@@ -176,13 +126,17 @@
     :y="noteDropdownY"
     :options="noteDropdownOptions"
     :show="noteDropdownShow"
-    :on-clickoutside="() => (noteDropdownShow = false)"
+    :on-clickoutside="
+      () => {
+        noteDropdownShow = false;
+      }
+    "
     @select="noteDropdownSelect"
   />
 </template>
 
 <script setup>
-import { ref, computed, nextTick, h, watch } from "vue";
+import { ref, nextTick, h, computed } from "vue";
 import {
   NButton,
   NScrollbar,
@@ -195,19 +149,14 @@ import {
   NInput,
   NInputNumber,
   NDropdown,
-  NTag,
-  NSelect,
-  NColorPicker,
-  NDynamicTags,
-  NTooltip,
-  useMessage,
-  useDialog
 } from "naive-ui";
-import { debounce } from "lodash-es";
+import { storeToRefs } from "pinia";
+import { noteStore } from "@/stores";
 import SvgIcon from "@/components/SvgIcon.vue";
+import RichTextEditor from "@/components/RichTextEditor.vue";
 
-const message = useMessage();
-const dialog = useDialog();
+const noteStoreInstance = noteStore();
+const { noteData } = storeToRefs(noteStoreInstance);
 
 // 图标渲染
 const renderIcon = (icon) => {
@@ -216,85 +165,14 @@ const renderIcon = (icon) => {
   };
 };
 
-// 便签数据（从localStorage初始化）
-const notesData = ref(loadFromLocalStorage());
-const searchQuery = ref("");
-const selectedTag = ref(null);
-
-// 标签选项（从现有便签自动生成）
-const tagOptions = computed(() => {
-  const tags = new Set();
-  notesData.value.forEach(note => {
-    if (note.tags) {
-      note.tags.forEach(tag => tags.add(tag));
-    }
-  });
-  return Array.from(tags).map(tag => ({
-    label: tag,
-    value: tag
-  }));
-});
-
-// 筛选便签
-const filteredNotes = computed(() => {
-  return notesData.value.filter(note => {
-    const matchesSearch = searchQuery.value === "" || 
-      note.title.includes(searchQuery.value) || 
-      note.content.includes(searchQuery.value);
-    
-    const matchesTag = selectedTag.value === null || 
-      (note.tags && note.tags.includes(selectedTag.value));
-    
-    return matchesSearch && matchesTag;
-  });
-});
-
 // 日期格式化
-const formatDate = (date) => {
-  if (!date) return "";
-  const d = new Date(date);
-  return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d
-    .getDate()
-    .toString()
-    .padStart(2, "0")}`;
+const formatDate = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
 };
 
-// 加载本地数据
-function loadFromLocalStorage() {
-  try {
-    const saved = localStorage.getItem('notes');
-    if (!saved) return [];
-    
-    const parsed = JSON.parse(saved);
-    return Array.isArray(parsed) 
-      ? parsed.map(note => ({
-          ...note,
-          createdAt: note.createdAt ? new Date(note.createdAt) : new Date(),
-          updatedAt: note.updatedAt ? new Date(note.updatedAt) : new Date(),
-          tags: note.tags || []
-        }))
-      : [];
-  } catch (e) {
-    console.error("加载便签失败:", e);
-    message.error("加载便签数据失败");
-    return [];
-  }
-}
-
-// 保存到本地（使用防抖）
-const saveToLocalStorage = debounce(() => {
-  try {
-    localStorage.setItem('notes', JSON.stringify(notesData.value));
-  } catch (e) {
-    console.error("保存便签失败:", e);
-    message.error("保存便签失败，可能已超出存储限制");
-  }
-}, 500);
-
-// 自动保存监听
-watch(notesData, saveToLocalStorage, { deep: true });
-
-// 表单相关
+// 便签表单数据
 const noteFormRef = ref(null);
 const noteModalShow = ref(false);
 const noteModalType = ref(false); // false 添加 / true 编辑
@@ -302,13 +180,17 @@ const noteFormValue = ref({
   id: null,
   title: "",
   content: "",
-  tags: [],
-  color: "",
-  createdAt: null,
-  updatedAt: null,
+  updateTime: null,
 });
 
+// 表单验证规则
 const noteFormRules = {
+  id: {
+    required: true,
+    type: "number",
+    message: "请输入合法 ID",
+    trigger: ["input", "blur"],
+  },
   title: {
     required: true,
     message: "请输入标题",
@@ -321,7 +203,7 @@ const noteFormRules = {
   },
 };
 
-// 右键菜单相关
+// 右键菜单数据
 const noteDropdownX = ref(0);
 const noteDropdownY = ref(0);
 const noteDropdownShow = ref(false);
@@ -336,6 +218,11 @@ const noteDropdownOptions = [
     key: "delete",
     icon: renderIcon("delete-1"),
   },
+  {
+    label: "置顶",
+    key: "pin",
+    icon: renderIcon("pin"),
+  },
 ];
 
 // 关闭模态框
@@ -345,27 +232,38 @@ const noteModalClose = () => {
     id: null,
     title: "",
     content: "",
-    tags: [],
-    color: "",
-    createdAt: null,
-    updatedAt: null,
+    updateTime: null,
   };
 };
 
 // 打开添加便签模态框
 const addNoteModalOpen = () => {
   // 生成ID
-  const maxId = notesData.value.reduce((max, item) => Math.max(max, item.id), 0);
+  const noteMaxID = noteData.value.reduce((max, item) => {
+    return item.id > max ? item.id : max;
+  }, -1);
+  
+  // 初始化表单数据
   noteFormValue.value = {
-    id: maxId + 1,
+    id: noteMaxID + 1,
     title: "",
     content: "",
-    tags: [],
-    color: "",
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    updateTime: Date.now(),
   };
+  
   noteModalType.value = false;
+  noteModalShow.value = true;
+};
+
+// 编辑便签
+const editNote = (note) => {
+  noteFormValue.value = {
+    id: note.id,
+    title: note.title,
+    content: note.content,
+    updateTime: Date.now(),
+  };
+  noteModalType.value = true;
   noteModalShow.value = true;
 };
 
@@ -373,37 +271,75 @@ const addNoteModalOpen = () => {
 const saveNote = () => {
   noteFormRef.value?.validate((errors) => {
     if (errors) {
-      message.error("请检查表单填写是否正确");
+      $message.error("请检查您的输入");
       return false;
     }
-
-    const now = new Date();
-    noteFormValue.value.updatedAt = now;
-
+    
     if (!noteModalType.value) {
       // 添加新便签
-      noteFormValue.value.createdAt = now;
-      notesData.value.push({ ...noteFormValue.value });
-      message.success("便签添加成功");
+      noteData.value.push({
+        ...noteFormValue.value,
+        updateTime: Date.now(),
+      });
+      $message.success("便签添加成功");
     } else {
-      // 更新便签
-      const index = notesData.value.findIndex(item => item.id === noteFormValue.value.id);
+      // 更新现有便签
+      const index = noteData.value.findIndex(item => item.id === noteFormValue.value.id);
       if (index !== -1) {
-        notesData.value[index] = { ...noteFormValue.value };
-        message.success("便签更新成功");
+        noteData.value[index] = {
+          ...noteFormValue.value,
+          updateTime: Date.now(),
+        };
+        $message.success("便签更新成功");
       }
     }
-
+    
     noteModalClose();
-    return true;
   });
 };
 
-// 右键菜单
+// 删除便签
+const deleteNote = () => {
+  const deleteId = noteFormValue.value.id;
+  if (typeof deleteId === "number") {
+    const indexToRemove = noteData.value.findIndex(item => item.id === deleteId);
+    if (indexToRemove !== -1) {
+      noteData.value.splice(indexToRemove, 1);
+      $message.success("便签删除成功");
+      return true;
+    }
+  }
+  $message.error("便签删除失败，请重试");
+};
+
+// 置顶便签
+const pinNote = () => {
+  const pinId = noteFormValue.value.id;
+  if (typeof pinId === "number") {
+    const index = noteData.value.findIndex(item => item.id === pinId);
+    if (index !== -1) {
+      const pinnedNote = noteData.value.splice(index, 1)[0];
+      noteData.value.unshift(pinnedNote);
+      $message.success("便签已置顶");
+      return true;
+    }
+  }
+  $message.error("便签置顶失败，请重试");
+};
+
+// 右键菜单触发
 const noteContextmenu = (e, note) => {
   e.preventDefault();
   noteDropdownShow.value = false;
-  noteFormValue.value = { ...note };
+  
+  // 设置当前操作的便签数据
+  noteFormValue.value = {
+    id: note.id,
+    title: note.title,
+    content: note.content,
+    updateTime: note.updateTime,
+  };
+  
   nextTick().then(() => {
     noteDropdownShow.value = true;
     noteDropdownX.value = e.clientX;
@@ -414,154 +350,171 @@ const noteContextmenu = (e, note) => {
 // 右键菜单选择
 const noteDropdownSelect = (key) => {
   noteDropdownShow.value = false;
+  
   switch (key) {
     case "edit":
-      noteModalType.value = true;
-      noteModalShow.value = true;
+      editNote(noteFormValue.value);
       break;
     case "delete":
-      deleteNote();
+      $dialog.warning({
+        title: "删除便签",
+        content: `确认删除 "${noteFormValue.value.title}" 便签？此操作将无法恢复！`,
+        positiveText: "删除",
+        negativeText: "取消",
+        onPositiveClick: () => {
+          deleteNote();
+        },
+      });
+      break;
+    case "pin":
+      pinNote();
+      break;
+    default:
       break;
   }
-};
-
-// 删除便签
-const deleteNote = () => {
-  dialog.warning({
-    title: "删除确认",
-    content: `确定要删除便签"${noteFormValue.value.title}"吗？此操作不可恢复！`,
-    positiveText: "删除",
-    negativeText: "取消",
-    onPositiveClick: () => {
-      const index = notesData.value.findIndex(item => item.id === noteFormValue.value.id);
-      if (index !== -1) {
-        notesData.value.splice(index, 1);
-        message.success("便签已删除");
-      }
-    }
-  });
 };
 
 // 导出便签
 const exportNotes = () => {
-  try {
-    const data = {
-      version: 1,
-      createdAt: new Date().toISOString(),
-      notes: notesData.value
-    };
-    
-    const dataStr = JSON.stringify(data, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const dataUrl = URL.createObjectURL(dataBlob);
-
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = `notes_backup_${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    URL.revokeObjectURL(dataUrl);
-    
-    message.success("便签导出成功，已下载到您的设备");
-  } catch (e) {
-    console.error("导出失败:", e);
-    message.error("便签导出失败");
+  if (!noteData.value.length) {
+    $message.warning("没有可导出的便签");
+    return;
   }
+  
+  // 准备导出数据
+  const exportData = {
+    version: "1.0",
+    createdAt: Date.now(),
+    notes: noteData.value,
+  };
+  
+  // 创建Blob对象
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  
+  // 创建下载链接
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `便签备份_${formatDate(Date.now())}.json`;
+  a.click();
+  
+  // 释放URL对象
+  URL.revokeObjectURL(url);
 };
 
 // 导入便签
-const importNotes = function() {
-  if (!this.files?.[0]) return;
-
-  const fileReader = new FileReader();
-  fileReader.readAsText(this.files[0]);
-  fileReader.onload = () => {
+const importNotes = (file) => {
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
     try {
-      const data = JSON.parse(fileReader.result);
+      const data = JSON.parse(e.target.result);
       
-      // 验证数据结构
-      if (!data?.notes || !Array.isArray(data.notes) || !data.notes.every(item => 
-        typeof item?.id === 'number' && 
-        item?.title && 
-        item?.content
-      )) {
-        throw new Error("无效的便签数据格式");
+      if (!data.notes || !Array.isArray(data.notes)) {
+        $message.error("导入的文件格式不正确");
+        return;
       }
-
-      dialog.info({
-        title: "导入确认",
-        content: `确定要导入 ${data.notes.length} 条便签吗？`,
-        positiveText: "导入",
-        negativeText: "取消",
-        onPositiveClick: () => {
-          // 合并数据（处理ID冲突）
-          const maxId = notesData.value.reduce((max, item) => Math.max(max, item.id), 0);
-          const newNotes = data.notes.map((note, i) => ({
-            ...note,
-            id: maxId + i + 1,
-            createdAt: note.createdAt ? new Date(note.createdAt) : new Date(),
-            updatedAt: note.updatedAt ? new Date(note.updatedAt) : new Date(),
-            tags: note.tags || [],
-            color: note.color || ""
-          }));
-
-          notesData.value = [...notesData.value, ...newNotes];
-          message.success(`成功导入 ${newNotes.length} 条便签`);
-        }
+      
+      // 合并导入的便签
+      const newNotes = data.notes.filter(note => 
+        note.title && note.content && 
+        !noteData.value.some(existing => 
+          existing.title === note.title && existing.content === note.content
+        )
+      );
+      
+      if (newNotes.length === 0) {
+        $message.warning("没有新的便签可导入");
+        return;
+      }
+      
+      // 计算新的ID
+      const maxId = noteData.value.reduce((max, item) => Math.max(max, item.id), 0);
+      newNotes.forEach((note, index) => {
+        note.id = maxId + index + 1;
+        note.updateTime = note.updateTime || Date.now();
       });
-    } catch (e) {
-      console.error("导入失败:", e);
-      message.error(`导入失败: ${e.message}`);
+      
+      noteData.value.push(...newNotes);
+      $message.success(`成功导入 ${newNotes.length} 条便签`);
+    } catch (error) {
+      $message.error("导入失败: " + error.message);
     }
   };
+  
+  reader.onerror = () => {
+    $message.error("文件读取失败");
+  };
+  
+  reader.readAsText(file);
 };
 
+// 文件上传处理
 const clickFileDom = () => {
-  const fileDom = document.querySelector("#notesUploadInput");
+  const fileDom = document.querySelector("#noteUploadInput");
   if (fileDom) {
-    fileDom.value = ""; // 允许重复选择同一文件
+    fileDom.value = ""; // 清除之前的选择
     fileDom.click();
   }
 };
+
+// 初始化文件上传监听
+onMounted(() => {
+  document.querySelector("#noteUploadInput")?.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files[0]) {
+      importNotes(e.target.files[0]);
+    }
+  });
+});
+
+onBeforeUnmount(() => {
+  document.querySelector("#noteUploadInput")?.removeEventListener("change");
+});
 </script>
 
 <style lang="scss" scoped>
-.notes__layout {
+.note__layout {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   
-  .notes-container {
+  .note-container {
     width: 100%;
-    height: calc(100% - 60px);
+    height: 100%;
     overflow-y: auto;
     
     .all-notes {
-      padding: 20px;
+      padding: 16px;
       box-sizing: border-box;
       
       .note-item {
-        cursor: pointer;
-        min-height: 140px;
-        padding: 12px;
         display: flex;
         flex-direction: column;
+        height: 240px;
+        padding: 16px;
         background-color: var(--main-background-light-color);
         border-radius: 8px;
-        transition: 
-          background-color 0.3s,
-          box-shadow 0.3s;
-        border: 1px solid var(--divider-color);
+        transition: all 0.3s;
+        cursor: pointer;
+        position: relative;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
         
         .note-header {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 8px;
-          padding-bottom: 4px;
+          align-items: center;
+          margin-bottom: 12px;
+          padding-bottom: 8px;
           border-bottom: 1px solid var(--divider-color);
           
           .title {
-            font-weight: bold;
+            font-size: 16px;
+            font-weight: 500;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -570,106 +523,104 @@ const clickFileDom = () => {
           
           .date {
             font-size: 12px;
-            color: var(--text-color-2);
-            margin-left: 10px;
+            color: var(--text-color-secondary);
+            margin-left: 8px;
           }
         }
         
         .content {
           flex: 1;
-          font-size: 14px;
-          display: -webkit-box;
-          -webkit-line-clamp: 4;
-          -webkit-box-orient: vertical;
           overflow: hidden;
+          font-size: 14px;
+          line-height: 1.5;
+          color: var(--text-color);
+          word-break: break-word;
+          display: -webkit-box;
+          -webkit-line-clamp: 8;
+          -webkit-box-orient: vertical;
           text-overflow: ellipsis;
-          margin-bottom: 8px;
         }
         
-        .tags {
-          margin-top: auto;
+        .note-footer {
           display: flex;
-          flex-wrap: wrap;
+          justify-content: flex-end;
+          margin-top: 8px;
+          
+          .edit-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+          }
         }
         
-        &:hover {
-          background-color: var(--main-background-hover-color);
-          box-shadow: 0 0 0 2px var(--main-background-hover-color);
+        &:hover .note-footer .edit-btn {
+          opacity: 1;
         }
       }
       
       .add-note {
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        flex-direction: row;
-        border: 1px dashed var(--divider-color);
+        background-color: var(--main-background-hover-color);
         
         .i-icon {
-          width: 1rem;
-          margin-right: 6px;
-          font-size: 20px;
-          opacity: 1;
+          font-size: 24px;
+          margin-bottom: 8px;
         }
         
-        .name {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+        .add-text {
+          font-size: 14px;
+        }
+        
+        &:hover {
+          background-color: var(--main-background-light-color);
         }
       }
     }
   }
   
-  .no-notes {
+  .not-note {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: calc(100% - 60px);
+    height: 100%;
     
     .tip {
-      font-size: 24px;
+      font-size: 18px;
       margin-bottom: 20px;
+      color: var(--text-color-secondary);
     }
   }
   
-  .action-bar {
+  .footer__btn-group {
     display: flex;
-    align-items: center;
-    padding: 10px 20px;
+    padding: 16px;
     border-top: 1px solid var(--divider-color);
-    background-color: var(--main-background-light-color);
     
-    .footer__btn-group {
+    .footer__btn {
       display: flex;
-      margin-left: auto;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      width: 80px;
+      height: 40px;
+      background-color: var(--main-background-light-color);
+      cursor: pointer;
+      font-size: 14px;
       
-      .footer__btn {
-        border-radius: 8px;
-        width: 80px;
-        height: 40px;
-        background-color: var(--main-background-light-color);
-        line-height: 40px;
-        text-align: center;
-        cursor: pointer;
-        font-size: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        
-        #notesUploadInput {
-          display: none;
-        }
-        
-        .i-icon {
-          margin-right: 5px;
-        }
+      .i-icon {
+        margin-right: 6px;
       }
       
-      div + div {
-        margin-left: 10px;
+      #noteUploadInput {
+        display: none;
       }
+    }
+    
+    div + div {
+      margin-left: 12px;
     }
   }
 }
