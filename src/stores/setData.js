@@ -12,7 +12,7 @@ const useSetDataStore = defineStore("setData", {
       // 壁纸遮罩
       showBackgroundGray: true,
       // 壁纸模糊
-      backgroundBlur: 0,
+      backgroundBlur: 2px,
       // 搜索引擎
       searchEngine: "bing",
       lastSearchEngine: "bing",
@@ -30,7 +30,7 @@ const useSetDataStore = defineStore("setData", {
       // 显示农历
       showLunar: false,
       // 是否显秒
-      showSeconds: false,
+      showSeconds: true,
       // 是否显零
       showZeroTime: true,
       // 12 小时制
