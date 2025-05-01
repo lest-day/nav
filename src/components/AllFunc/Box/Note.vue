@@ -21,40 +21,26 @@
               </div>
               <div class="content">{{ note.content }}</div>
               <div class="note-actions">
-                <n-tooltip trigger="hover">
-                  <template #trigger>
-                    <n-button text @click.stop="editNote(note)">
-                      <template #icon>
-                        <SvgIcon iconName="icon-edit" />
-                      </template>
-                    </n-button>
-                  </template>
-                  编辑
-                </n-tooltip>
-                <n-tooltip trigger="hover">
-                  <template #trigger>
-                    <n-button text @click.stop="confirmDeleteNote(note)">
-                      <template #icon>
-                        <SvgIcon iconName="icon-delete" />
-                      </template>
-                    </n-button>
-                  </template>
-                  删除
-                </n-tooltip>
+                <n-button text @click.stop="editNote(note)">
+                  <SvgIcon iconName="icon-edit" size="16" />
+                </n-button>
+                <n-button text @click.stop="confirmDeleteNote(note)">
+                  <SvgIcon iconName="icon-delete" size="16" />
+                </n-button>
               </div>
             </n-grid-item>
             <n-grid-item
               class="note-item add-note"
               @click="openAddModal"
             >
-              <SvgIcon iconName="icon-add" size="24" />
-              <span class="add-text">添加便签</span>
+              <SvgIcon iconName="icon-add" size="20" />
+              <span>添加便签</span>
             </n-grid-item>
           </n-grid>
         </n-scrollbar>
       </div>
       <div v-else class="not-note">
-        <span class="tip">暂无便签，去添加吧</span>
+        <span class="tip">暂无便签</span>
         <n-button strong secondary @click="openAddModal">
           <template #icon>
             <SvgIcon iconName="icon-add" />
@@ -117,7 +103,6 @@ import {
   NForm, 
   NFormItem, 
   NInput,
-  NTooltip,
   NSpace,
   useMessage,
   useDialog
@@ -246,11 +231,12 @@ const deleteNote = (id) => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  background-color: #f8f8f8;
 }
 
 .note-container {
   height: 100%;
-  padding: 12px;
+  padding: 16px;
   box-sizing: border-box;
 }
 
@@ -263,16 +249,14 @@ const deleteNote = (id) => {
   flex-direction: column;
   height: 220px;
   padding: 16px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #eaeaea;
   transition: all 0.2s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .note-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .note-header {
@@ -280,12 +264,12 @@ const deleteNote = (id) => {
   justify-content: space-between;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .title {
-  font-weight: bold;
-  font-size: 16px;
+  font-weight: 500;
+  font-size: 15px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -294,7 +278,7 @@ const deleteNote = (id) => {
 
 .date {
   font-size: 12px;
-  color: #888888;
+  color: #999;
   margin-left: 8px;
   white-space: nowrap;
 }
@@ -307,17 +291,17 @@ const deleteNote = (id) => {
   -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   font-size: 14px;
-  line-height: 1.5;
-  color: #333333;
+  line-height: 1.6;
+  color: #333;
 }
 
 .note-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 4px;
+  margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid #f0f0f0;
 }
 
 .add-note {
@@ -326,12 +310,13 @@ const deleteNote = (id) => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background-color: #f5f5f5;
-  border: 1px dashed #e0e0e0;
+  background-color: #fafafa;
+  border: 1px dashed #ddd;
+  color: #666;
 }
 
 .add-note:hover {
-  background-color: #eeeeee;
+  background-color: #f5f5f5;
 }
 
 .not-note {
@@ -345,6 +330,6 @@ const deleteNote = (id) => {
 
 .tip {
   font-size: 16px;
-  color: #666666;
+  color: #666;
 }
 </style>
