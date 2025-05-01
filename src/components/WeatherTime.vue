@@ -185,7 +185,7 @@ onBeforeUnmount(() => {
 
   /* 特殊时间样式（如两行显示） */
   &.two {
-    padding-bottom: 60px;
+    padding-bottom: 30px;
 
     .time {
       display: flex;
