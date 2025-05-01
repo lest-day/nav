@@ -1,5 +1,5 @@
 <template>
-  <!-- 捷径 -->
+  <!-- 快链 -->
   <div class="shortcut__layout">
     <Transition name="fade" mode="out-in">
       <div v-if="shortcutData[0]" class="shortcut">
@@ -30,18 +30,18 @@
               @click="addShortcutModalOpen"
             >
               <SvgIcon iconName="icon-add" />
-              <span class="name">添加捷径</span>
+              <span class="name">添加快链</span>
             </n-grid-item>
           </n-grid>
         </n-scrollbar>
       </div>
       <div v-else class="not-shortcut">
-        <span class="tip">暂无捷径，去添加吧</span>
+        <span class="tip">暂无快链，去添加吧</span>
         <n-button strong secondary @click="addShortcutModalOpen">
           <template #icon>
             <SvgIcon iconName="icon-add" />
           </template>
-          添加捷径
+          添加快链
         </n-button>
       </div>
     </Transition>
@@ -57,11 +57,11 @@
       </div>
     </div>
   </div>
-  <!-- 添加捷径 -->
+  <!-- 添加快链 -->
   <n-modal
     preset="card"
     v-model:show="addShortcutModalShow"
-    :title="`${addShortcutModalType ? '编辑' : '添加'}捷径`"
+    :title="`${addShortcutModalType ? '编辑' : '添加'}快链`"
     :bordered="false"
     @mask-click="addShortcutClose"
   >
@@ -80,16 +80,16 @@
           :show-button="false"
         />
       </n-form-item>
-      <n-form-item label="捷径名称" path="name">
+      <n-form-item label="快链名称" path="name">
         <n-input
           clearable
           show-count
           maxlength="14"
           v-model:value="addShortcutValue.name"
-          placeholder="请输入捷径名称"
+          placeholder="请输入快链名称"
         />
       </n-form-item>
-      <n-form-item label="站点链接" path="url">
+      <n-form-item label="站点快链" path="url">
         <n-input clearable v-model:value="addShortcutValue.url" placeholder="请输入站点链接" />
       </n-form-item>
     </n-form>
@@ -102,7 +102,7 @@
       </n-space>
     </template>
   </n-modal>
-  <!-- 捷径右键菜单 -->
+  <!-- 快链右键菜单 -->
   <n-dropdown
     placement="bottom-start"
     trigger="manual"
@@ -152,7 +152,7 @@ const renderIcon = (icon) => {
   };
 };
 
-// 添加捷径数据
+// 添加快链数据
 const addShortcutRef = ref(null);
 const addShortcutModalShow = ref(false);
 const addShortcutModalType = ref(false); // false 添加 / true 编辑
@@ -214,7 +214,7 @@ const addShortcutClose = () => {
   };
 };
 
-// 开启添加捷径
+// 开启添加快链
 const addShortcutModalOpen = () => {
   // 生成 ID
   const shortcutMaxID = shortcutData.value.reduce((max, item) => {
@@ -230,14 +230,14 @@ const addShortcutModalOpen = () => {
   addShortcutModalShow.value = true;
 };
 
-// 添加或编辑捷径
+// 添加或编辑快链
 const addOrEditShortcuts = () => {
   addShortcutRef.value?.validate((errors) => {
     if (errors) {
       $message.error("请检查您的输入");
       return false;
     }
-    // 新增捷径
+    // 新增快链
     if (!addShortcutModalType.value) {
       // 是否重复
       const isDuplicate = shortcutData.value?.some(
@@ -245,7 +245,7 @@ const addOrEditShortcuts = () => {
           item.name === addShortcutValue.value.name || item.url === addShortcutValue.value.url,
       );
       if (isDuplicate) {
-        $message.error("新增名称或链接与已有捷径重复");
+        $message.error("新增名称或链接与已有快链重复");
         return false;
       }
       shortcutData.value.push({
@@ -253,26 +253,26 @@ const addOrEditShortcuts = () => {
         name: addShortcutValue.value.name,
         url: addShortcutValue.value.url,
       });
-      $message.success("捷径添加成功");
+      $message.success("快链添加成功");
       addShortcutClose();
       return true;
     } else {
-      // 编辑捷径
+      // 快链捷径
       const index = shortcutData.value.findIndex((item) => item.id === addShortcutValue.value.id);
       if (index === -1) {
-        $message.error("捷径中不存在该项，请重试");
+        $message.error("快链中不存在该项，请重试");
         return false;
       }
       shortcutData.value[index].name = addShortcutValue.value.name;
       shortcutData.value[index].url = addShortcutValue.value.url;
-      $message.success("捷径编辑成功");
+      $message.success("快链编辑成功");
       addShortcutClose();
       return true;
     }
   });
 };
 
-// 删除捷径
+// 删除快链
 const delShortcuts = () => {
   const deleteId = addShortcutValue.value.id;
   if (typeof deleteId === "number") {
@@ -283,12 +283,12 @@ const delShortcuts = () => {
       for (let i = indexToRemove; i < shortcutData.value.length; i++) {
         shortcutData.value[i].id = i;
       }
-      $message.success("捷径删除成功");
+      $message.success("快链删除成功");
       return true;
     }
-    $message.error("捷径删除失败，请重试");
+    $message.error("快链删除失败，请重试");
   } else {
-    $message.error("捷径删除失败，请重试");
+    $message.error("快链删除失败，请重试");
   }
 };
 
@@ -317,8 +317,8 @@ const shortCutDropdownSelect = (key) => {
       break;
     case "delete":
       $dialog.warning({
-        title: "删除捷径",
-        content: `确认删除 ${addShortcutValue.value.name} 捷径？此操作将无法恢复！`,
+        title: "删除快链",
+        content: `确认删除 ${addShortcutValue.value.name} 快链？此操作将无法恢复！`,
         positiveText: "删除",
         negativeText: "取消",
         onPositiveClick: () => {
@@ -331,7 +331,7 @@ const shortCutDropdownSelect = (key) => {
   }
 };
 
-// 捷径跳转
+// 快链跳转
 const shortCutJump = (url) => {
   const urlRegex = /^(https?:\/\/)/i;
   const urlFormat = urlRegex.test(url) ? url : `//${url}`;
