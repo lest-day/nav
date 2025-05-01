@@ -32,7 +32,7 @@ const useSetDataStore = defineStore("setData", {
       // 是否显秒
       showSeconds: true,
       // 是否显零
-      showZeroTime: true,
+      showZeroTime: false,
       // 12 小时制
       use12HourFormat: false,
       // 天气显示
