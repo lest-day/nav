@@ -46,6 +46,9 @@
       </div>
     </Transition>
 
+    <!-- 底部留白区域 -->
+    <div class="bottom-spacer"></div>
+
     <!-- 添加/编辑便签模态框 -->
     <n-modal
       v-model:show="showModal"
@@ -227,12 +230,17 @@ const deleteNote = (id) => {
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .add-btn-container {
   padding: 16px;
   display: flex;
   justify-content: flex-end;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1;
 }
 
 .add-btn {
@@ -240,13 +248,15 @@ const deleteNote = (id) => {
 }
 
 .note-container {
-  height: 100%;
-  padding: 0 16px 16px;
+  height: calc(100% - 72px); /* 减去顶部按钮和底部留白的高度 */
+  padding: 0 16px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .all-notes {
   height: 100%;
+  padding-bottom: 16px; /* 网格内部底部留白 */
 }
 
 .note-item {
@@ -305,7 +315,7 @@ const deleteNote = (id) => {
 }
 
 .not-note {
-  height: 100%;
+  height: calc(100% - 72px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -315,5 +325,10 @@ const deleteNote = (id) => {
 
 .tip {
   font-size: 16px;
+}
+
+.bottom-spacer {
+  height: 40px; /* 底部留白高度 */
+  flex-shrink: 0;
 }
 </style>
