@@ -1,6 +1,6 @@
 <template>
   <n-tabs class="all-box" size="large" justify-content="space-evenly" animated>
-    <n-tab-pane class="no-padding height--full" name="link" tab="捷径">
+    <n-tab-pane class="no-padding height--full" name="link" tab="快链">
       <ShortCut />
     </n-tab-pane>
     <n-tab-pane name="note" tab="便签"> 即将完善 </n-tab-pane>
