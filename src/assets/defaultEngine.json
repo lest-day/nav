@@ -23,11 +23,6 @@
     "translation": "https://fanyi.baidu.com/#zh/en/",
     "icon": "baidu"
   },
-  "wikipedia": {
-    "name": "Wikipedia",
-    "url": "https://zh.wikipedia.org/wiki/Special:Search?search=",
-    "icon": "wikipedia"
-  },
   "duckduckgo": {
     "name": "DuckDuckGo",
     "url": "https://duckduckgo.com/?q=",
