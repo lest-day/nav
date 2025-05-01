@@ -135,7 +135,7 @@ onBeforeUnmount(() => {
   .date {
     font-size: 1.15rem;
     opacity: 0.8;
-    margin: 4px 0px;
+    margin: 1px 0px;
     text-shadow: var(--main-text-shadow);
 
     .month::after {
@@ -180,7 +180,7 @@ onBeforeUnmount(() => {
   }
 
   &.lunar {
-    margin-bottom: 50px;
+    margin-bottom: 40px;
   }
 
   /* 特殊时间样式（如两行显示） */
