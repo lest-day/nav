@@ -3,7 +3,6 @@
     <div class="copyright">
       <span class="site-name">{{ siteName }}</span>
       <span class="year">{{ fullYear }}</span>
-      </span>
       <span v-if="icp" class="icp" @click="jumpTo('https://beian.miit.gov.cn')">
         {{ icp }}
       </span>
