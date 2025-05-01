@@ -1,16 +1,8 @@
 <template>
-  <div class="note__layout">
-    <div class="add-btn-container">
-      <n-button type="primary" @click="openAddModal" class="add-btn">
-        <template #icon>
-          <SvgIcon iconName="icon-add" />
-        </template>
-        添加便签
-      </n-button>
-    </div>
-
+  <!-- 便签主布局 -->
+  <div class="notes__layout">
     <Transition name="fade" mode="out-in">
-      <div v-if="notes.length" class="note-container">
+      <div v-if="notesData[0]" class="notes-container">
         <n-scrollbar class="scrollbar">
           <n-grid
             class="all-notes"
@@ -20,300 +12,468 @@
             :y-gap="12"
           >
             <n-grid-item
-              v-for="note in sortedNotes"
+              v-for="note in notesData"
               :key="note.id"
               class="note-item"
+              @contextmenu="noteContextmenu($event, note)"
             >
               <div class="note-header">
                 <span class="title">{{ note.title }}</span>
-                <span class="date">{{ formatDate(note.updateTime) }}</span>
+                <span class="date">{{ formatDate(note.updatedAt) }}</span>
               </div>
-              <div class="content" :title="note.content">{{ note.content }}</div>
-              <div class="note-actions">
-                <n-button text @click.stop="editNote(note)">
-                  <SvgIcon iconName="icon-edit" size="16" />
-                </n-button>
-                <n-button text @click.stop="confirmDeleteNote(note)">
-                  <SvgIcon iconName="icon-delete" size="16" />
-                </n-button>
-              </div>
+              <div class="content">{{ note.content }}</div>
+            </n-grid-item>
+            <n-grid-item
+              class="note-item add-note"
+              @click="addNoteModalOpen"
+            >
+              <SvgIcon iconName="icon-add" />
+              <span class="name">添加便签</span>
             </n-grid-item>
           </n-grid>
         </n-scrollbar>
       </div>
-      <div v-else class="not-note">
-        <span class="tip">暂无便签，点击上方按钮添加</span>
+      <div v-else class="no-notes">
+        <span class="tip">暂无便签，去添加吧</span>
+        <n-button strong secondary @click="addNoteModalOpen">
+          <template #icon>
+            <SvgIcon iconName="icon-add" />
+          </template>
+          添加便签
+        </n-button>
       </div>
     </Transition>
-
-    <!-- 添加/编辑便签模态框 -->
-    <n-modal
-      v-model:show="showModal"
-      :title="currentNote.id ? '编辑便签' : '添加便签'"
-      preset="dialog"
-      style="width: 90%; max-width: 600px;"
-      :mask-closable="false"
-    >
-      <n-form ref="noteFormRef">
-        <n-form-item label="标题" path="title" required>
-          <n-input 
-            v-model:value="currentNote.title" 
-            placeholder="便签标题"
-            maxlength="30"
-            show-count
-            clearable
-          />
-        </n-form-item>
-        <n-form-item label="内容" path="content">
-          <n-input
-            v-model:value="currentNote.content"
-            type="textarea"
-            placeholder="便签内容"
-            :autosize="{
-              minRows: 3,
-              maxRows: 10
-            }"
-            maxlength="500"
-            show-count
-          />
-        </n-form-item>
-      </n-form>
-      <template #action>
-        <n-space>
-          <n-button @click="showModal = false">取消</n-button>
-          <n-button type="primary" @click="saveNote">保存</n-button>
-        </n-space>
-      </template>
-    </n-modal>
+    <div class="footer__btn-group">
+      <div class="footer__btn" @click="exportNotes">
+        <SvgIcon iconName="icon-xiazai" />
+        <span class="btnName">导出</span>
+      </div>
+      <div class="footer__btn" @click="clickFileDom">
+        <input type="file" name="上传" id="notesUploadInput" accept=".json" />
+        <SvgIcon iconName="icon-shangchuan" />
+        <span class="btnName">导入</span>
+      </div>
+    </div>
   </div>
+
+  <!-- 添加/编辑便签模态框 -->
+  <n-modal
+    preset="card"
+    v-model:show="noteModalShow"
+    :title="`${noteModalType ? '编辑' : '添加'}便签`"
+    :bordered="false"
+    @mask-click="noteModalClose"
+  >
+    <n-form
+      ref="noteFormRef"
+      :rules="noteFormRules"
+      :model="noteFormValue"
+      :label-width="80"
+    >
+      <n-form-item label="ID" path="id">
+        <n-input-number
+          disabled
+          placeholder="自动生成ID"
+          v-model:value="noteFormValue.id"
+          style="width: 100%"
+          :show-button="false"
+        />
+      </n-form-item>
+      <n-form-item label="标题" path="title">
+        <n-input
+          clearable
+          show-count
+          maxlength="20"
+          v-model:value="noteFormValue.title"
+          placeholder="请输入便签标题"
+        />
+      </n-form-item>
+      <n-form-item label="内容" path="content">
+        <n-input
+          type="textarea"
+          :autosize="{ minRows: 3, maxRows: 8 }"
+          clearable
+          show-count
+          maxlength="500"
+          v-model:value="noteFormValue.content"
+          placeholder="请输入便签内容"
+        />
+      </n-form-item>
+    </n-form>
+    <template #footer>
+      <n-space justify="end">
+        <n-button strong secondary @click="noteModalClose"> 取消 </n-button>
+        <n-button strong secondary @click="saveNote">
+          {{ noteModalType ? "保存" : "添加" }}
+        </n-button>
+      </n-space>
+    </template>
+  </n-modal>
+
+  <!-- 便签右键菜单 -->
+  <n-dropdown
+    placement="bottom-start"
+    trigger="manual"
+    size="large"
+    :x="noteDropdownX"
+    :y="noteDropdownY"
+    :options="noteDropdownOptions"
+    :show="noteDropdownShow"
+    :on-clickoutside="() => (noteDropdownShow = false)"
+    @select="noteDropdownSelect"
+  />
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { 
-  NButton, 
-  NScrollbar, 
-  NGrid, 
-  NGridItem, 
-  NModal, 
-  NForm, 
-  NFormItem, 
-  NInput,
+import { ref, nextTick, h } from "vue";
+import {
+  NButton,
+  NScrollbar,
+  NGrid,
+  NGridItem,
   NSpace,
-  useMessage,
-  useDialog
-} from 'naive-ui'
-import SvgIcon from '@/components/SvgIcon.vue'
+  NModal,
+  NForm,
+  NFormItem,
+  NInput,
+  NInputNumber,
+  NDropdown,
+} from "naive-ui";
+import SvgIcon from "@/components/SvgIcon.vue";
 
-const message = useMessage()
-const dialog = useDialog()
+// 图标渲染
+const renderIcon = (icon) => {
+  return () => {
+    return h(SvgIcon, { iconName: `icon-${icon}` }, null);
+  };
+};
 
 // 便签数据
-const notes = ref(JSON.parse(localStorage.getItem('notes')) || [
-  { 
-    id: 1, 
-    title: '欢迎使用便签', 
-    content: '这是一个简单的便签示例，您可以编辑或删除它。长内容会自动显示省略号，鼠标悬停可查看完整内容。', 
-    updateTime: Date.now()
-  }
-])
-
-// 当前操作的便签
-const currentNote = ref({
-  id: null,
-  title: '',
-  content: '',
-  updateTime: null
-})
-
-// 控制模态框显示
-const showModal = ref(false)
-const noteFormRef = ref(null)
-
-// 按更新时间排序的便签
-const sortedNotes = computed(() => {
-  return [...notes.value].sort((a, b) => b.updateTime - a.updateTime)
-})
+const notesData = ref([
+  // 示例数据
+  // {
+  //   id: 1,
+  //   title: "欢迎使用",
+  //   content: "这是一个便签示例，右键点击可以编辑或删除",
+  //   createdAt: new Date(),
+  //   updatedAt: new Date(),
+  // },
+]);
 
 // 日期格式化
-const formatDate = (timestamp) => {
-  if (!timestamp) return ''
-  const date = new Date(timestamp)
-  return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`
-}
+const formatDate = (date) => {
+  if (!date) return "";
+  const d = new Date(date);
+  return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d
+    .getDate()
+    .toString()
+    .padStart(2, "0")}`;
+};
 
-// 打开添加模态框
-const openAddModal = () => {
-  currentNote.value = {
+// 表单相关
+const noteFormRef = ref(null);
+const noteModalShow = ref(false);
+const noteModalType = ref(false); // false 添加 / true 编辑
+const noteFormValue = ref({
+  id: null,
+  title: "",
+  content: "",
+  createdAt: null,
+  updatedAt: null,
+});
+
+const noteFormRules = {
+  title: {
+    required: true,
+    message: "请输入标题",
+    trigger: ["input", "blur"],
+  },
+  content: {
+    required: true,
+    message: "请输入内容",
+    trigger: ["input", "blur"],
+  },
+};
+
+// 右键菜单相关
+const noteDropdownX = ref(0);
+const noteDropdownY = ref(0);
+const noteDropdownShow = ref(false);
+const noteDropdownOptions = [
+  {
+    label: "编辑",
+    key: "edit",
+    icon: renderIcon("edit"),
+  },
+  {
+    label: "删除",
+    key: "delete",
+    icon: renderIcon("delete-1"),
+  },
+];
+
+// 关闭模态框
+const noteModalClose = () => {
+  noteModalShow.value = false;
+  noteFormValue.value = {
     id: null,
-    title: '',
-    content: '',
-    updateTime: null
-  }
-  showModal.value = true
-}
+    title: "",
+    content: "",
+    createdAt: null,
+    updatedAt: null,
+  };
+};
 
-// 编辑便签
-const editNote = (note) => {
-  currentNote.value = { ...note }
-  showModal.value = true
-}
-
-// 保存便签到localStorage
-const saveToLocalStorage = () => {
-  localStorage.setItem('notes', JSON.stringify(notes.value))
-}
+// 打开添加便签模态框
+const addNoteModalOpen = () => {
+  // 生成ID
+  const maxId = notesData.value.reduce((max, item) => Math.max(max, item.id), 0);
+  noteFormValue.value = {
+    id: maxId + 1,
+    title: "",
+    content: "",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  noteModalType.value = false;
+  noteModalShow.value = true;
+};
 
 // 保存便签
 const saveNote = () => {
-  if (!currentNote.value.title.trim()) {
-    message.warning('请输入便签标题')
-    return
-  }
+  noteFormRef.value?.validate((errors) => {
+    if (errors) {
+      return false;
+    }
 
-  if (currentNote.value.id) {
-    // 更新现有便签
-    const index = notes.value.findIndex(n => n.id === currentNote.value.id)
-    if (index !== -1) {
-      notes.value[index] = { 
-        ...currentNote.value, 
-        updateTime: Date.now() 
+    const now = new Date();
+    noteFormValue.value.updatedAt = now;
+
+    if (!noteModalType.value) {
+      // 添加新便签
+      noteFormValue.value.createdAt = now;
+      notesData.value.push({ ...noteFormValue.value });
+    } else {
+      // 更新便签
+      const index = notesData.value.findIndex((item) => item.id === noteFormValue.value.id);
+      if (index !== -1) {
+        notesData.value[index] = { ...noteFormValue.value };
       }
-      message.success('便签已更新')
     }
-  } else {
-    // 添加新便签
-    const newId = notes.value.length > 0 
-      ? Math.max(...notes.value.map(n => n.id)) + 1 
-      : 1
-    notes.value.push({ 
-      ...currentNote.value, 
-      id: newId,
-      updateTime: Date.now() 
-    })
-    message.success('便签已添加')
-  }
-  
-  saveToLocalStorage()
-  showModal.value = false
-}
 
-// 确认删除便签
-const confirmDeleteNote = (note) => {
-  dialog.warning({
-    title: '删除确认',
-    content: `确定要删除便签"${note.title}"吗？`,
-    positiveText: '删除',
-    negativeText: '取消',
-    onPositiveClick: () => {
-      deleteNote(note.id)
-    }
-  })
-}
+    noteModalClose();
+    return true;
+  });
+};
+
+// 右键菜单
+const noteContextmenu = (e, note) => {
+  e.preventDefault();
+  noteDropdownShow.value = false;
+  noteFormValue.value = { ...note };
+  nextTick().then(() => {
+    noteDropdownShow.value = true;
+    noteDropdownX.value = e.clientX;
+    noteDropdownY.value = e.clientY;
+  });
+};
+
+// 右键菜单选择
+const noteDropdownSelect = (key) => {
+  noteDropdownShow.value = false;
+  switch (key) {
+    case "edit":
+      noteModalType.value = true;
+      noteModalShow.value = true;
+      break;
+    case "delete":
+      deleteNote();
+      break;
+  }
+};
 
 // 删除便签
-const deleteNote = (id) => {
-  const index = notes.value.findIndex(n => n.id === id)
+const deleteNote = () => {
+  const index = notesData.value.findIndex((item) => item.id === noteFormValue.value.id);
   if (index !== -1) {
-    notes.value.splice(index, 1)
-    saveToLocalStorage()
-    message.success('便签已删除')
+    notesData.value.splice(index, 1);
   }
-}
+};
+
+// 导出便签
+const exportNotes = () => {
+  const dataStr = JSON.stringify(notesData.value, null, 2);
+  const dataBlob = new Blob([dataStr], { type: "application/json" });
+  const dataUrl = URL.createObjectURL(dataBlob);
+
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = `notes_${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  URL.revokeObjectURL(dataUrl);
+};
+
+// 导入便签
+onMounted(() => {
+  document.querySelector("#notesUploadInput")?.addEventListener("change", importNotes);
+});
+
+onBeforeUnmount(() => {
+  document.querySelector("#notesUploadInput")?.removeEventListener("change", importNotes);
+});
+
+const importNotes = function () {
+  if (this.files && this.files[0]) {
+    const fileReader = new FileReader();
+    fileReader.readAsText(this.files[0]);
+    fileReader.onload = function () {
+      try {
+        const importedNotes = JSON.parse(fileReader.result);
+        if (Array.isArray(importedNotes)) {
+          // 生成新的ID避免冲突
+          const maxId = notesData.value.reduce((max, item) => Math.max(max, item.id), 0);
+          importedNotes.forEach((note, index) => {
+            note.id = maxId + index + 1;
+            note.createdAt = note.createdAt || new Date();
+            note.updatedAt = note.updatedAt || new Date();
+          });
+          notesData.value.push(...importedNotes);
+        }
+      } catch (e) {
+        console.error("导入失败", e);
+      }
+    };
+  }
+};
+
+const clickFileDom = () => {
+  const fileDom = document.querySelector("#notesUploadInput");
+  fileDom?.click();
+};
 </script>
 
-<style scoped>
-.note__layout {
-  height: 100%;
+<style lang="scss" scoped>
+.notes__layout {
   display: flex;
   flex-direction: column;
-}
-
-.add-btn-container {
-  padding: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.add-btn {
-  margin-bottom: 16px;
-}
-
-.note-container {
+  width: 100%;
   height: 100%;
-  padding: 0 16px 16px;
-  box-sizing: border-box;
-}
-
-.all-notes {
-  height: 100%;
-}
-
-.note-item {
-  display: flex;
-  flex-direction: column;
-  height: 220px;
-  padding: 16px;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-  transition: all 0.2s;
-}
-
-.note-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.title {
-  font-weight: 500;
-  font-size: 15px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-
-.date {
-  font-size: 12px;
-  color: #757575;
-  margin-left: 8px;
-  white-space: nowrap;
-}
-
-.content {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 6;
-  -webkit-box-orient: vertical;
-  font-size: 14px;
-  line-height: 1.6;
-  word-break: break-word;
-}
-
-.note-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 4px;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.not-note {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-}
-
-.tip {
-  font-size: 16px;
+  
+  .notes-container {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    
+    .all-notes {
+      padding: 20px;
+      box-sizing: border-box;
+      
+      .note-item {
+        cursor: pointer;
+        min-height: 120px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--main-background-light-color);
+        border-radius: 8px;
+        transition: 
+          background-color 0.3s,
+          box-shadow 0.3s;
+        
+        .note-header {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 8px;
+          padding-bottom: 4px;
+          border-bottom: 1px solid var(--divider-color);
+          
+          .title {
+            font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          
+          .date {
+            font-size: 12px;
+            color: var(--text-color-2);
+          }
+        }
+        
+        .content {
+          flex: 1;
+          font-size: 14px;
+          display: -webkit-box;
+          -webkit-line-clamp: 4;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        &:hover {
+          background-color: var(--main-background-hover-color);
+          box-shadow: 0 0 0 2px var(--main-background-hover-color);
+        }
+      }
+      
+      .add-note {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: row;
+        
+        .i-icon {
+          width: 1rem;
+          margin-right: 6px;
+          font-size: 20px;
+          opacity: 1;
+        }
+        
+        .name {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+  
+  .no-notes {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    
+    .tip {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+  }
+  
+  .footer__btn-group {
+    display: flex;
+    padding: 15px 0;
+    padding-left: 20px;
+    
+    .footer__btn {
+      border-radius: 8px;
+      width: 80px;
+      height: 40px;
+      background-color: var(--main-background-light-color);
+      line-height: 40px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 16px;
+      
+      #notesUploadInput {
+        display: none;
+      }
+    }
+    
+    div + div {
+      margin-left: 10px;
+    }
+  }
 }
 </style>
