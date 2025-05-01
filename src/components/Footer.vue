@@ -18,11 +18,12 @@
       <div class="about-modal">
         <div class="about">
           <span class="name">{{ siteName }}</span>
+          <p>此功能基于 Snav 修改而成，在此感谢原作者 imsyy 和其他的贡献者</p>
           <span class="version">v {{ packageJson.version }}</span>
         </div>
         <div class="desc">
           <n-space class="link" justify="center">
-            <n-button strong secondary @click="jumpTo('https://github.com/imsyy/Snavigation')">
+            <n-button strong secondary @click="jumpTo('https://github.com/imsyy/Snav')">
               Github
             </n-button>
           </n-space>
