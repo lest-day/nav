@@ -11,11 +11,11 @@
 
     <Transition name="fade" mode="out-in">
       <div v-if="notes.length" class="note-container">
-        <n-scrollbar class="scrollbar" :trigger="none">
+        <n-scrollbar class="scrollbar">
           <n-grid
             class="all-notes"
             responsive="screen"
-            :cols="gridCols"
+            cols="1 s:2 m:3 l:4"
             :x-gap="12"
             :y-gap="12"
           >
@@ -23,7 +23,6 @@
               v-for="note in sortedNotes"
               :key="note.id"
               class="note-item"
-              @click="handleNoteClick(note)"
             >
               <div class="note-header">
                 <span class="title">{{ note.title }}</span>
@@ -43,13 +42,7 @@
         </n-scrollbar>
       </div>
       <div v-else class="not-note">
-        <n-empty description="暂无便签">
-          <template #extra>
-            <n-button size="small" @click="openAddModal">
-              添加便签
-            </n-button>
-          </template>
-        </n-empty>
+        <span class="tip">暂无便签，点击上方按钮添加</span>
       </div>
     </Transition>
 
@@ -60,14 +53,9 @@
       preset="dialog"
       style="width: 90%; max-width: 600px;"
       :mask-closable="false"
-      @after-leave="resetForm"
     >
-      <n-form 
-        ref="noteFormRef" 
-        :model="currentNote" 
-        :rules="formRules"
-      >
-        <n-form-item label="标题" path="title">
+      <n-form ref="noteFormRef">
+        <n-form-item label="标题" path="title" required>
           <n-input 
             v-model:value="currentNote.title" 
             placeholder="便签标题"
@@ -93,13 +81,7 @@
       <template #action>
         <n-space>
           <n-button @click="showModal = false">取消</n-button>
-          <n-button 
-            type="primary" 
-            @click="handleSubmit"
-            :loading="isSubmitting"
-          >
-            保存
-          </n-button>
+          <n-button type="primary" @click="saveNote">保存</n-button>
         </n-space>
       </template>
     </n-modal>
@@ -107,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { 
   NButton, 
   NScrollbar, 
@@ -118,28 +100,23 @@ import {
   NFormItem, 
   NInput,
   NSpace,
-  NEmpty,
   useMessage,
-  useDialog,
-  useBreakpoints
+  useDialog
 } from 'naive-ui'
 import SvgIcon from '@/components/SvgIcon.vue'
 
 const message = useMessage()
 const dialog = useDialog()
-const breakpoints = useBreakpoints()
-
-// 响应式列数
-const gridCols = computed(() => {
-  if (breakpoints.value.small) return '2'
-  if (breakpoints.value.medium) return '3'
-  if (breakpoints.value.large) return '4'
-  return '1'
-})
 
 // 便签数据
-const notes = ref([])
-const isSubmitting = ref(false)
+const notes = ref(JSON.parse(localStorage.getItem('notes')) || [
+  { 
+    id: 1, 
+    title: '欢迎使用便签', 
+    content: '这是一个简单的便签示例，您可以编辑或删除它。长内容会自动显示省略号，鼠标悬停可查看完整内容。', 
+    updateTime: Date.now()
+  }
+])
 
 // 当前操作的便签
 const currentNote = ref({
@@ -153,30 +130,6 @@ const currentNote = ref({
 const showModal = ref(false)
 const noteFormRef = ref(null)
 
-// 表单验证规则
-const formRules = {
-  title: [
-    { required: true, message: '请输入便签标题', trigger: 'blur' },
-    { min: 1, max: 30, message: '标题长度应在1-30个字符之间', trigger: 'blur' }
-  ],
-  content: [
-    { max: 500, message: '内容不能超过500个字符', trigger: 'blur' }
-  ]
-}
-
-// 初始化数据
-const initNotes = () => {
-  const savedNotes = localStorage.getItem('notes')
-  notes.value = savedNotes ? JSON.parse(savedNotes) : [
-    { 
-      id: 1, 
-      title: '欢迎使用便签', 
-      content: '这是一个简单的便签示例，您可以编辑或删除它。长内容会自动显示省略号，鼠标悬停可查看完整内容。', 
-      updateTime: Date.now()
-    }
-  ]
-}
-
 // 按更新时间排序的便签
 const sortedNotes = computed(() => {
   return [...notes.value].sort((a, b) => b.updateTime - a.updateTime)
@@ -186,12 +139,7 @@ const sortedNotes = computed(() => {
 const formatDate = (timestamp) => {
   if (!timestamp) return ''
   const date = new Date(timestamp)
-  return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
-}
-
-// 保存便签到localStorage
-const saveToLocalStorage = () => {
-  localStorage.setItem('notes', JSON.stringify(notes.value))
+  return `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`
 }
 
 // 打开添加模态框
@@ -211,62 +159,43 @@ const editNote = (note) => {
   showModal.value = true
 }
 
-// 处理便签点击
-const handleNoteClick = (note) => {
-  editNote(note)
-}
-
-// 提交表单
-const handleSubmit = () => {
-  noteFormRef.value?.validate(async (errors) => {
-    if (!errors) {
-      isSubmitting.value = true
-      try {
-        await saveNote()
-        showModal.value = false
-      } finally {
-        isSubmitting.value = false
-      }
-    }
-  })
+// 保存便签到localStorage
+const saveToLocalStorage = () => {
+  localStorage.setItem('notes', JSON.stringify(notes.value))
 }
 
 // 保存便签
 const saveNote = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => { // 模拟异步操作
-      if (currentNote.value.id) {
-        // 更新现有便签
-        const index = notes.value.findIndex(n => n.id === currentNote.value.id)
-        if (index !== -1) {
-          notes.value[index] = { 
-            ...currentNote.value, 
-            updateTime: Date.now() 
-          }
-          message.success('便签已更新')
-        }
-      } else {
-        // 添加新便签
-        const newId = notes.value.length > 0 
-          ? Math.max(...notes.value.map(n => n.id)) + 1 
-          : 1
-        notes.value.push({ 
-          ...currentNote.value, 
-          id: newId,
-          updateTime: Date.now() 
-        })
-        message.success('便签已添加')
-      }
-      
-      saveToLocalStorage()
-      resolve()
-    }, 300)
-  })
-}
+  if (!currentNote.value.title.trim()) {
+    message.warning('请输入便签标题')
+    return
+  }
 
-// 重置表单
-const resetForm = () => {
-  noteFormRef.value?.restoreValidation()
+  if (currentNote.value.id) {
+    // 更新现有便签
+    const index = notes.value.findIndex(n => n.id === currentNote.value.id)
+    if (index !== -1) {
+      notes.value[index] = { 
+        ...currentNote.value, 
+        updateTime: Date.now() 
+      }
+      message.success('便签已更新')
+    }
+  } else {
+    // 添加新便签
+    const newId = notes.value.length > 0 
+      ? Math.max(...notes.value.map(n => n.id)) + 1 
+      : 1
+    notes.value.push({ 
+      ...currentNote.value, 
+      id: newId,
+      updateTime: Date.now() 
+    })
+    message.success('便签已添加')
+  }
+  
+  saveToLocalStorage()
+  showModal.value = false
 }
 
 // 确认删除便签
@@ -291,11 +220,6 @@ const deleteNote = (id) => {
     message.success('便签已删除')
   }
 }
-
-// 初始化
-onMounted(() => {
-  initNotes()
-})
 </script>
 
 <style scoped>
@@ -316,7 +240,7 @@ onMounted(() => {
 }
 
 .note-container {
-  height: calc(100% - 68px);
+  height: 100%;
   padding: 0 16px 16px;
   box-sizing: border-box;
 }
@@ -330,16 +254,9 @@ onMounted(() => {
   flex-direction: column;
   height: 220px;
   padding: 16px;
-  border-radius: 8px;
-  border: 1px solid var(--n-border-color);
-  background-color: var(--n-color);
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
   transition: all 0.2s;
-  cursor: pointer;
-  
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
-  }
 }
 
 .note-header {
@@ -347,7 +264,7 @@ onMounted(() => {
   justify-content: space-between;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid var(--n-border-color);
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .title {
@@ -361,7 +278,7 @@ onMounted(() => {
 
 .date {
   font-size: 12px;
-  color: var(--n-text-color-secondary);
+  color: #757575;
   margin-left: 8px;
   white-space: nowrap;
 }
@@ -376,7 +293,6 @@ onMounted(() => {
   font-size: 14px;
   line-height: 1.6;
   word-break: break-word;
-  color: var(--n-text-color);
 }
 
 .note-actions {
@@ -385,11 +301,11 @@ onMounted(() => {
   gap: 4px;
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid var(--n-border-color);
+  border-top: 1px solid #e0e0e0;
 }
 
 .not-note {
-  height: calc(100% - 68px);
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -397,13 +313,7 @@ onMounted(() => {
   gap: 16px;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.tip {
+  font-size: 16px;
 }
 </style>
