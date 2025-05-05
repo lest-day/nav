@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // 全局配置
-axios.defaults.timeout = 60000;
+axios.defaults.timeout = 30000;
 axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
 axios.defaults.withCredentials = false;
 
