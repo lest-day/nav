@@ -16,7 +16,7 @@
     "lunar-calendar": "^0.1.4",
     "pinia": "^2.1.4",
     "pinia-plugin-persistedstate": "^3.2.0",
-    "sass": "^1.64.1",
+    "sass": "^1.69.5",
     "vue": "^3.3.4"
   },
   "devDependencies": {
@@ -29,5 +29,6 @@
     "vite": "^4.4.5",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-pwa": "^0.16.4"
-  }
+  },
+  "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
 }

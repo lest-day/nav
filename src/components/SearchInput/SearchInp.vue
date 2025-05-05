@@ -13,11 +13,7 @@
       v-if="status.siteStatus === 'focus'"
       class="mask"
       @click="closeSearchInput(false)"
-      @contextmenu.stop="
-        (event) => {
-          event.preventDefault();
-        }
-      "
+      @contextmenu.prevent
     />
     <!-- 主搜索框 -->
     <div class="all" ref="searchAllRef" @animationend="inputAnimationEnd">
@@ -38,7 +34,7 @@
         type="text"
         label="search"
         title="请输入搜索内容"
-        autocomplete="false"
+        autocomplete="off"
         :placeholder="inputTip"
         v-model="status.searchInputValue"
         @focus="status.setSiteStatus('focus')"

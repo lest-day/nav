@@ -49,14 +49,14 @@
           @after-leave="changeSuggestionsHeights"
         >
           <div
-            v-if="searchKeyword !== null && searchSuggestionsData[0]"
+            v-if="searchKeyword !== null && searchSuggestionsData.length > 0"
             class="all-result"
             ref="allResultsRef"
           >
             <div
               v-for="item in searchSuggestionsData"
-              class="s-result"
               :key="item"
+              class="s-result"
               @click.stop="toSearch(item, 1)"
             >
               <SvgIcon iconName="icon-search" className="search" />
@@ -144,7 +144,7 @@ const keyboardEvents = (keyCode, event) => {
     if (keyCode === 38 || keyCode === 40) {
       // 阻止默认事件
       event.preventDefault();
-      if (mainInput && allResultsRef.value && searchSuggestionsData.value[0]) {
+      if (mainInput && allResultsRef.value && searchSuggestionsData.value.length > 0) {
         const suggestionItems = allResultsRef.value.querySelectorAll(".s-result");
         if (suggestionItems.length > 0) {
           // 获取当前已聚焦的元素
