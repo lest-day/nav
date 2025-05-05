@@ -33,9 +33,9 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: "Snavigation",
-        short_name: "Snavigation",
-        description: "一个极致简约的导航页",
+        name: "lest-day的起始页",
+        short_name: "lest-day的起始页",
+        description: "lest-day的起始页，基于SNav修改而成。",
         display: "standalone",
         start_url: "/",
         theme_color: "#fff",
