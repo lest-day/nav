@@ -31,17 +31,17 @@ export const getWeather = async (key, city) => {
 export const getSearchSuggestions = async (keyWord) => {
   try {
     const encodedKeyword = encodeURIComponent(keyWord);
+    const callbackName = `jsonp_${Date.now()}`;
     const response = await fetchJsonp(
-      `https://suggestion.baidu.com/su?wd=${encodedKeyword}&cb=json`,
+      `https://suggestion.baidu.com/su?wd=${encodedKeyword}&cb=${callbackName}`,
       {
-        // 回调参数
-        jsonpCallback: "cb",
+        jsonpCallback: callbackName,
       },
     );
     const data = await response.json();
     return data.s;
   } catch (error) {
     console.error("处理搜索建议发生错误：", error);
-    return null;
+    return []; // 返回空数组而不是 null
   }
 };
