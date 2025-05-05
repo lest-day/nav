@@ -101,8 +101,11 @@ const props = defineProps({
   },
 });
 
+// 缓存 DOM 查询结果
+let mainInput = null;
+
 // 搜索框联想
-const keywordsSearch = debounce((val) => {
+const keywordsSearch = debounce(async (val) => {
   const searchValue = val?.trim();
   // 是否为空
   if (!searchValue || searchValue === "") {
@@ -116,35 +119,40 @@ const keywordsSearch = debounce((val) => {
   // 若为文字
   if (searchKeyword.value) {
     console.log(val + "的搜索建议");
-    // 调用搜索建议
-    getSearchSuggestions(searchValue)
-      .then((res) => {
-        console.log(res);
-        // 写入结果
-        searchSuggestionsData.value = Array.from(res);
-        // 计算高度
-        nextTick().then(() => {
-          changeSuggestionsHeights();
-        });
-      })
-      .catch((error) => {
-        // 清空结果
-        searchSuggestionsData.value = [];
-        console.error("处理搜索建议发生错误：", error);
-      });
+    try {
+      // 调用搜索建议
+      const res = await getSearchSuggestions(searchValue);
+      console.log(res);
+      // 写入结果
+      searchSuggestionsData.value = Array.from(res);
+      // 计算高度
+      await nextTick();
+      changeSuggestionsHeights();
+    } catch (error) {
+      // 清空结果
+      searchSuggestionsData.value = [];
+      console.error("处理搜索建议发生错误：", error);
+    }
   }
 }, 300);
+
+// 获取主输入框元素
+const getMainInput = () => {
+  if (!mainInput) {
+    mainInput = document.getElementById("main-input");
+  }
+  return mainInput;
+};
 
 // 响应键盘事件
 const keyboardEvents = (keyCode, event) => {
   try {
-    // 获取元素
-    const mainInput = document.getElementById("main-input");
+    const input = getMainInput();
     // 38 上 / 40 下
     if (keyCode === 38 || keyCode === 40) {
       // 阻止默认事件
       event.preventDefault();
-      if (mainInput && allResultsRef.value && searchSuggestionsData.value.length > 0) {
+      if (input && allResultsRef.value && searchSuggestionsData.value.length > 0) {
         const suggestionItems = allResultsRef.value.querySelectorAll(".s-result");
         if (suggestionItems.length > 0) {
           // 获取当前已聚焦的元素
@@ -152,26 +160,25 @@ const keyboardEvents = (keyCode, event) => {
           // 确定当前聚焦的元素在列表中的索引
           const currentIndex = Array.from(suggestionItems).indexOf(focusedItem);
           // 移除所有元素的选中状态
-          suggestionItems.forEach((item) => item.classList.toggle("focus", false));
+          suggestionItems.forEach((item) => item.classList.remove("focus"));
           // 计算下一个要聚焦的元素的索引
           let nextIndex = keyCode === 38 ? currentIndex - 1 : currentIndex + 1;
           // 确保索引不越界
           nextIndex = Math.max(0, Math.min(nextIndex, suggestionItems.length - 1));
           // 操作元素
           if (nextIndex !== -1) {
-            suggestionItems[nextIndex].classList.toggle("focus", true);
-            mainInput.value = suggestionItems[nextIndex].querySelector(".text").textContent;
+            suggestionItems[nextIndex].classList.add("focus");
+            input.value = suggestionItems[nextIndex].querySelector(".text").textContent;
           }
         }
       }
     }
     // 13 回车
     if (keyCode === 13) {
-      toSearch(mainInput.value, 1);
+      toSearch(input.value, 1);
     }
   } catch (error) {
-    $message.error("出现问题，请尝试重置程序");
-    console.error("键盘事件出现错误：" + error);
+    console.error("键盘事件出现错误：", error);
   }
 };
 
@@ -182,7 +189,7 @@ const changeSuggestionsHeights = () => {
     const specialallResultsHeight = specialallResultsRef.value?.offsetHeight;
     suggestionsHeights.value = (specialallResultsHeight || 0) + (allResultsHeight || 0);
   } catch (error) {
-    console.error("计算高度时出现错误：" + error);
+    console.error("计算高度时出现错误：", error);
   }
 };
 
