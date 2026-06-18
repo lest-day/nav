@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    concurrency:
+      group: build-dist
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
 
@@ -19,8 +22,7 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      - name: Upload dist as artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: ./dist
