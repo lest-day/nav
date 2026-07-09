@@ -342,7 +342,6 @@ const shortCutJump = (url) => {
   }
 };
 
-
 // download start
 // 点击按钮进行下载html文件
 function downloadHtmlFile() {
@@ -444,8 +443,6 @@ function clickFileDom() {
   }
 }
 // upload end
-
-
 </script>
 
 <style lang="scss" scoped>
