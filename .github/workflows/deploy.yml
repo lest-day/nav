@@ -18,36 +18,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            .nuxt
-            .output
-          key: ${{ runner.os }}-nuxt-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-nuxt-
+          node-version: 18
+          cache: npm
 
       - run: npm ci
+      - run: npm run build
 
-      - name: Copy CNAME from repository root
+      - name: Copy CNAME into dist
         run: |
-          cp CNAME ./public/CNAME
+          cp CNAME dist/CNAME
           echo "[√] CNAME copied"
 
-      - run: npx nuxt generate
-
-      - name: Deploy to gh-pages
+      - name: Deploy dist to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./.output/public
+          publish_dir: ./dist
           force_orphan: true
           enable_jekyll: false
