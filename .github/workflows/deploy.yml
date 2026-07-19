@@ -1,4 +1,4 @@
-name: Build and push dist to gh-pages
+name: Build and deploy to gh-pages
 
 on:
   push:
@@ -14,21 +14,40 @@ jobs:
     concurrency:
       group: build-gh-pages
       cancel-in-progress: true
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: npm
+          node-version: '22'
+          cache: 'npm'
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .nuxt
+            .output
+          key: ${{ runner.os }}-nuxt-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuxt-
 
       - run: npm ci
-      - run: npm run build
 
-      - name: Deploy dist to gh-pages branch
+      - name: Copy CNAME from repository root
+        run: |
+          cp CNAME ./public/CNAME
+          echo "[√] CNAME copied"
+
+      - run: npx nuxt generate
+
+      - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./dist
-          force_orphan: true   # ✅ 保证 gh-pages 是干净的单分支
+          publish_dir: ./.output/public
+          force_orphan: true
+          enable_jekyll: false
