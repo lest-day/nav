@@ -29,5 +29,10 @@
     "vite": "^4.4.5",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-pwa": "^0.16.4"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.1": true,
+    "esbuild@0.18.20": true,
+    "vue-demi@0.14.10": true
   }
 }

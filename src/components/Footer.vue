@@ -6,6 +6,7 @@
       <span v-if="icp" class="icp" @click="jumpTo('https://beian.miit.gov.cn')">
         {{ icp }}
       </span>
+      <span class="status" @click="jumpTo('https://uptime.lestday233.eu.org/status/lestday233')">网页状态</span>
       <span class="about" @click="aboutSiteModal = true">关于此页</span>
     </div>
     <!-- 关于 -->
@@ -19,7 +20,7 @@
         <div class="about">
           <span class="name">{{ siteName }}</span>
           <p style="text-align: center">
-            此功能基于 Snav 修改而成，请点击下方按钮了解该项目，在此感谢原作者 imsyy
+            此站功能基于 Snav 修改而成，请点击下方按钮了解该项目，在此感谢原作者 imsyy
             和其他的贡献者。
           </p>
           <span class="version">v {{ packageJson.version }}</span>
@@ -99,6 +100,12 @@ const jumpTo = (url) => {
         margin-right: 4px;
       }
     }
+    .status {
+      &::before {
+        content: "|";
+        margin-right: 4px;
+      }
+    }
     .about {
       &::before {
         content: "|";
@@ -107,6 +114,7 @@ const jumpTo = (url) => {
     }
     .anthor,
     .icp,
+    .status,
     .about {
       cursor: pointer;
       &:hover {
